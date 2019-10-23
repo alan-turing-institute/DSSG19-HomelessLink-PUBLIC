@@ -1,0 +1,64 @@
+#describes what we will run
+#temporal config, cohort, features, labels
+#column names
+
+id: '100'
+
+temporal:
+  data_starts: '2017-12-01'
+  data_ends: '2019-02-28'
+  train_label_span: '1d'
+  test_label_span: '1d'
+  train_span: '50y'
+  train_frequency: '1d'
+  test_span: '1m'
+  test_frequency: '1d'
+  model_update_frequency: '1m'
+
+cohort:
+  name: all_referrals
+  query: >
+    create table temp.{}{} as (
+      select alert, a.datetime_opened::date, region
+      from semantic.alerts a
+      inner join temp.fold{} f
+      on a.datetime_opened::date = f.datetime_opened
+    )
+
+label:
+  name: person_found_next_day
+  positive_definition: ["'person found - engaging with services'", "'person found - no entitlement to local services'", "'person found - reconnected to services in another area'", "'person found - street activity/begging'", "'person found - referred to emergency services'", "'person found - taken to shelter'", "'person found - unwilling to engage'", "'la did not respond'", "'person not found - site could not be located'", "'person not found - site not accessible'", "'person not found - person looked for'", "'person not looked for - street activity/begging location'", "'person not found - person no longer rough sleeping'", "'person not looked for - person already known'", "'person not found - no outreach service in this area'", "'no action taken - identified hotspot'", "'person not looked for – wrong local authority / geographical information'"]
+  negative_definition: ["'no alert – unlikely sleep site'", "'not enough information - referrer contacted but no reply'", "'not enough information - no referrer contact details'", "'no alert - sign posting'", "'no alert - other'", "'no alert - site already known by outreach'", "'details sent to london transport outreach team'", "'no alert - london winter duplicate'", "'no alert - out of london winter duplicate'"]
+  query: >
+    create table temp.{}{}_temp as (
+      with label_table as (
+        select datetime_opened, date_closed, alert,
+        (case when outcome_internal in ({}) then 1
+        when outcome_internal in ({}) then 0
+        else 2 end) as label from semantic.alerts
+      )
+      select temp.{}{}.*, label_table.label
+      from temp.{}{}
+      inner join label_table on temp.{}{}.alert = label_table.alert
+      where label_table.label is NULL or label_table.label in (0, 1)
+    )
+
+features:
+  feature_list: [dowx,dowy,domx,domy,doyx,doyy,date_linear,time_seen_flag,time_expected_flag,alert_origin_mobile,alert_origin_web,alert_origin_phone,gender_female,gender_male,gender_unknown,gender_nonbinary,group_referral_flag,member_of_public_flag,appearance_details_entry_flag,location_details_entry_flag,avg_temperature,max_temperature,min_temperature,avg_windspeed,max_windgust,max_precipprobability,min_precipprobability,snowaccumulation_flag,appearance_wordcount,location_wordcount,concerns_wordcount,la_avg_response_time_7d,la_avg_response_time_28d,alerts_last_7d,alerts_last_28d,person_found_last_7d,person_found_last_28d,referrals_last_7d,referrals_last_28d,person_found_rate_last_7d,person_found_rate_last_28d,alerts_within_50m_28d,alerts_within_50m_60d,alerts_within_50m_6mo,alerts_within_250m_7d,alerts_within_250m_28d,alerts_within_250m_60d,alerts_within_250m_6mo,alerts_within_1000m_7d,alerts_within_1000m_28d,alerts_within_1000m_60d,alerts_within_1000m_6mo,referrals_within_50m_7d,referrals_within_50m_28d,referrals_within_50m_60d,referrals_within_50m_6mo,referrals_within_250m_7d,referrals_within_250m_28d,referrals_within_250m_60d,referrals_within_250m_6mo,referrals_within_1000m_7d,referrals_within_1000m_28d,referrals_within_1000m_60d,referrals_within_1000m_6mo,persons_found_within_50m_7d,persons_found_within_50m_28d,persons_found_within_50m_60d,persons_found_within_50m_6mo,persons_found_within_250m_7d,persons_found_within_250m_28d,persons_found_within_250m_60d,persons_found_within_250m_6mo,persons_found_within_1000m_7d,persons_found_within_1000m_28d,persons_found_within_1000m_60d,persons_found_within_1000m_6mo,alerts_within_50m_7d_web_origin,alerts_within_50m_7d_phone_origin,alerts_within_50m_7d_mobile_app_origin,alerts_within_50m_28d_web_origin,alerts_within_50m_28d_phone_origin,alerts_within_50m_28d_mobile_app_origin,alerts_within_50m_60d_web_origin,alerts_within_50m_60d_phone_origin,alerts_within_50m_60d_mobile_app_origin,alerts_within_50m_6mo_web_origin,alerts_within_50m_6mo_phone_origin,alerts_within_50m_6mo_mobile_app_origin,alerts_within_250m_7d_web_origin,alerts_within_250m_7d_phone_origin,alerts_within_250m_7d_mobile_app_origin,alerts_within_250m_28d_web_origin,alerts_within_250m_28d_phone_origin,alerts_within_250m_28d_mobile_app_origin,alerts_within_250m_60d_web_origin,alerts_within_250m_60d_phone_origin,alerts_within_250m_60d_mobile_app_origin,alerts_within_250m_6mo_web_origin,alerts_within_250m_6mo_phone_origin,alerts_within_250m_6mo_mobile_app_origin,alerts_within_1000m_7d_web_origin,alerts_within_1000m_7d_phone_origin,alerts_within_1000m_7d_mobile_app_origin,alerts_within_1000m_28d_web_origin,alerts_within_1000m_28d_phone_origin,alerts_within_1000m_28d_mobile_app_origin,alerts_within_1000m_60d_web_origin,alerts_within_1000m_60d_phone_origin,alerts_within_1000m_60d_mobile_app_origin,alerts_within_1000m_6mo_web_origin,alerts_within_1000m_6mo_phone_origin,alerts_within_1000m_6mo_mobile_app_origin,alerts_within_5000m_7d,alerts_within_5000m_7d_web_origin,alerts_within_5000m_7d_phone_origin,alerts_within_5000m_7d_mobile_app_origin,alerts_within_5000m_28d,alerts_within_5000m_28d_web_origin,alerts_within_5000m_28d_phone_origin,alerts_within_5000m_28d_mobile_app_origin,alerts_within_5000m_60d,alerts_within_5000m_60d_web_origin,alerts_within_5000m_60d_phone_origin,alerts_within_5000m_60d_mobile_app_origin,alerts_within_5000m_6mo,alerts_within_5000m_6mo_web_origin,alerts_within_5000m_6mo_phone_origin,alerts_within_5000m_6mo_mobile_app_origin,referrals_within_50m_7d_web_origin,referrals_within_50m_7d_phone_origin,referrals_within_50m_7d_mobile_app_origin,referrals_within_50m_28d_web_origin,referrals_within_50m_28d_phone_origin,referrals_within_50m_28d_mobile_app_origin,referrals_within_50m_60d_web_origin,referrals_within_50m_60d_phone_origin,referrals_within_50m_60d_mobile_app_origin,referrals_within_50m_6mo_web_origin,referrals_within_50m_6mo_phone_origin,referrals_within_50m_6mo_mobile_app_origin,referrals_within_250m_7d_web_origin,referrals_within_250m_7d_phone_origin,referrals_within_250m_7d_mobile_app_origin,referrals_within_250m_28d_web_origin,referrals_within_250m_28d_phone_origin,referrals_within_250m_28d_mobile_app_origin,referrals_within_250m_60d_web_origin,referrals_within_250m_60d_phone_origin,referrals_within_250m_60d_mobile_app_origin,referrals_within_250m_6mo_web_origin,referrals_within_250m_6mo_phone_origin,referrals_within_250m_6mo_mobile_app_origin,referrals_within_1000m_7d_web_origin,referrals_within_1000m_7d_phone_origin,referrals_within_1000m_7d_mobile_app_origin,referrals_within_1000m_28d_web_origin,referrals_within_1000m_28d_phone_origin,referrals_within_1000m_28d_mobile_app_origin,referrals_within_1000m_60d_web_origin,referrals_within_1000m_60d_phone_origin,referrals_within_1000m_60d_mobile_app_origin,referrals_within_1000m_6mo_web_origin,referrals_within_1000m_6mo_phone_origin,referrals_within_1000m_6mo_mobile_app_origin,referrals_within_5000m_7d,referrals_within_5000m_7d_web_origin,referrals_within_5000m_7d_phone_origin,referrals_within_5000m_7d_mobile_app_origin,referrals_within_5000m_28d,referrals_within_5000m_28d_web_origin,referrals_within_5000m_28d_phone_origin,referrals_within_5000m_28d_mobile_app_origin,referrals_within_5000m_60d,referrals_within_5000m_60d_web_origin,referrals_within_5000m_60d_phone_origin,referrals_within_5000m_60d_mobile_app_origin,referrals_within_5000m_6mo,referrals_within_5000m_6mo_web_origin,referrals_within_5000m_6mo_phone_origin,referrals_within_5000m_6mo_mobile_app_origin,persons_found_within_50m_7d_web_origin,persons_found_within_50m_7d_phone_origin,persons_found_within_50m_7d_mobile_app_origin,persons_found_within_50m_28d_web_origin,persons_found_within_50m_28d_phone_origin,persons_found_within_50m_28d_mobile_app_origin,persons_found_within_50m_60d_web_origin,persons_found_within_50m_60d_phone_origin,persons_found_within_50m_60d_mobile_app_origin,persons_found_within_50m_6mo_web_origin,persons_found_within_50m_6mo_phone_origin,persons_found_within_50m_6mo_mobile_app_origin,persons_found_within_250m_7d_web_origin,persons_found_within_250m_7d_phone_origin,persons_found_within_250m_7d_mobile_app_origin,persons_found_within_250m_28d_web_origin,persons_found_within_250m_28d_phone_origin,persons_found_within_250m_28d_mobile_app_origin,persons_found_within_250m_60d_web_origin,persons_found_within_250m_60d_phone_origin,persons_found_within_250m_60d_mobile_app_origin,persons_found_within_250m_6mo_web_origin,persons_found_within_250m_6mo_phone_origin,persons_found_within_250m_6mo_mobile_app_origin,persons_found_within_1000m_7d_web_origin,persons_found_within_1000m_7d_phone_origin,persons_found_within_1000m_7d_mobile_app_origin,persons_found_within_1000m_28d_web_origin,persons_found_within_1000m_28d_phone_origin,persons_found_within_1000m_28d_mobile_app_origin,persons_found_within_1000m_60d_web_origin,persons_found_within_1000m_60d_phone_origin,persons_found_within_1000m_60d_mobile_app_origin,persons_found_within_1000m_6mo_web_origin,persons_found_within_1000m_6mo_phone_origin,persons_found_within_1000m_6mo_mobile_app_origin,persons_found_within_5000m_7d,persons_found_within_5000m_7d_web_origin,persons_found_within_5000m_7d_phone_origin,persons_found_within_5000m_7d_mobile_app_origin,persons_found_within_5000m_28d,persons_found_within_5000m_28d_web_origin,persons_found_within_5000m_28d_phone_origin,persons_found_within_5000m_28d_mobile_app_origin,persons_found_within_5000m_60d,persons_found_within_5000m_60d_web_origin,persons_found_within_5000m_60d_phone_origin,persons_found_within_5000m_60d_mobile_app_origin,persons_found_within_5000m_6mo,persons_found_within_5000m_6mo_web_origin,persons_found_within_5000m_6mo_phone_origin,persons_found_within_5000m_6mo_mobile_app_origin,distance_to_nearest_hotspot,hotspot_within_50m,hotspot_within_100m,hotspot_within_250m,hotspot_within_500m,hotspot_within_1000m,hotspot_within_5000m,hotspot_within_10km]
+  python_feature_list: [0_x, 1_x, 2_x, 3_x, 4_x, 5_x, 6_x, 7_x, 8_x, 9_x, 0_y, 1_y, 2_y, 3_y, 4_y, 5_y, 6_y, 7_y, 8_y, 9_y, sleep, other_activity, important_word, mental_health]
+  param_features:
+    la_found_rate: [7,30]
+  query: >
+    create table temp.{}{}_temp as
+    (
+      select
+      c.alert,
+      c.label,
+      c.datetime_opened{}
+      from temp.{}{} c
+      inner join semantic.alerts_with_features a on c.alert = a.alert
+    );
+
+classifiers:
+  sklearn.tree.DecisionTreeClassifier:
+    max_depth: [1,2,3,4,5,~]

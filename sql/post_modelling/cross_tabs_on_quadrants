@@ -1,0 +1,94 @@
+﻿-- referrals threshold: 6000, person fou nd threshold 4000
+with tbl as (
+select 
+--ref.model, 
+ref.alert, 
+--ref.label, 
+--ref.score as ref_score_dt,
+rr.score as ref_score_rf,
+--row_number() over (order by rr.score desc) as ref_score_rf_rank,  
+--ada.score as pf_score_ada,
+pfr.score as pf_score_rf,
+--row_number() over (order by pfr.score desc) as pf_score_rf_rank,  
+--e.experiment, e.fold, e.param_config, e.algorithm, e.model,
+--(case when rr.score >= 0.702 then 'above_k' when rr.score < 0.702 then 'below_k' else null end) as ref_threshold,
+--(case when row_number() over (order by rr.score desc) <= 6000 then 'above_k' when row_number() over (order by rr.score desc) > 6000 then 'below_k' else null end) as ref_threshold2,
+--(case when pfr.score  >= 0.48740451082757 then 'above_k' when pfr.score  < 0.48740451082757 then 'below_k' else null end) as pf_threshold,
+(case 
+	when rr.score >= 0.702 and pfr.score >= 0.48740451082757 then 'high ref score, high pf score' 
+	when rr.score < 0.702 and pfr.score >= 0.48740451082757 then 'low ref score, high pf score' 
+	when rr.score >= 0.702 and pfr.score < 0.48740451082757 then 'high ref score, low pf score' 
+	when rr.score < 0.702 and pfr.score < 0.48740451082757 then 'low ref score, low pf score' 
+	else null end) as ref_threshold,
+a.*
+from results.predictions ref
+join results.experiments e on e.model = ref.model
+join results.predictions ada on ref.alert = ada.alert and ada.model = 15860
+join results.predictions rr on rr.alert = ref.alert and rr.model = 17851
+join results.predictions pfr on ref.alert = pfr.alert and pfr.model = 15440
+join semantic.alerts_with_features a on a.alert = ref.alert
+where ref.model = 18687
+)
+
+select 
+t.ref_threshold,
+count(*),
+count(*)::float/10426,
+
+-- weather
+avg(t.avg_temperature) as avg_temp, 
+avg(t.avg_windspeed) as avg_windspeed, 
+-- distance from hotspot
+avg(t.distance_to_nearest_hotspot) as avg_distance_from_hotspot,
+stddev(t.distance_to_nearest_hotspot) as stddev_distance_from_hotspot,
+min(t.distance_to_nearest_hotspot) as min_distance_from_hotspot,
+max(t.distance_to_nearest_hotspot) as max_distance_from_hotspot,
+-- appearance
+avg(t.appearance_wordcount) as avg_appearance_wc, 
+stddev(t.appearance_wordcount) as stddev_appearance_wc, 
+min(t.appearance_wordcount) as min_appearance_wc, 
+max(t.appearance_wordcount) as max_appearance_wc, 
+-- location
+avg(t.location_wordcount) as avg_location_wc,
+stddev(t.location_wordcount) as stddev_location_wc,
+min(t.location_wordcount) as min_location_wc,
+max(t.location_wordcount) as max_location_wc,
+-- concerns
+avg(t.concerns_wordcount) as avg_concerns_wc,
+stddev(t.concerns_wordcount) as stddev_concerns_wc,
+min(t.concerns_wordcount) as min_concerns_wc,
+max(t.concerns_wordcount) as max_concerns_wc,
+-- gender
+sum(t.gender_male)/count(*)::float as total_male, 
+sum(t.gender_female)/count(*)::float as total_female,
+sum(t.gender_nonbinary)/count(*)::float as total_nonbinary,
+-- time seen
+sum(t.time_expected_flag)/count(*)::float as time_expected_count,
+sum(t.time_seen_flag)/count(*)::float as time_seen_count,
+-- alert origin
+sum(t.alert_origin_web)/count(*)::float as web_percent,
+sum(t.alert_origin_phone)/count(*)::float as phone_percent,
+sum(t.alert_origin_mobile)/count(*)::float as mobile_percent
+ from tbl t
+
+ group by cube(t.ref_threshold)
+
+--order by pfr.score desc
+--limit 4000
+--) a
+
+/*
+select * from results.experiments where param_config = 23 and experiment = 62 and fold = 13 -- PERSON FOUND
+union all
+select * from results.experiments where param_config = 16 and experiment = 82 and fold = 13 -- REFERRALS
+union all 
+select * from results.experiments where param_config = 4 and experiment = 74 and fold = 13 -- PERSON FOUND
+union all
+select * from results.experiments where experiment = 100 and param_config = 40 and fold = 13 -- REFERRALS
+*/
+--referrals -- adaboost exp 85, config 10, all decision trees are in exp 100, param config 40
+
+--param config 4, exp 74
+--para 62, 23 
+
+-- person found outcome cut-off stays 1000

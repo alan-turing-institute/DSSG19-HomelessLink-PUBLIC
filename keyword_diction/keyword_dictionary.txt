@@ -1,0 +1,4 @@
+{'sleep': ['sleep', 'blanket', 'asleep','duvet','tent','lie down','bed', 'bedding','bag','cardboard','wrap'],
+'other_activity': ['small change','sit','beg'],
+'important_word':['pregnant', 'injury','luggage','daughter','son','child','baby','intoxicate','alcohol','drug'],
+'mental_health':['mental health','depression','anxiety','bipolar','schizophrenia','ocd','trauma','borderline','mania','psychiatric','suicide']}

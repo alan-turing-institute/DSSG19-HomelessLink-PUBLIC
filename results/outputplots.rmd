@@ -1,0 +1,63 @@
+---
+title: "Final Plots"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rio)
+library(ggplot2)
+library(reshape2)
+```
+
+## R Markdown
+
+### Histograms
+
+```{r}
+# Top is RandomForest 23 Experiment 62, then AdaBoost 4 Experiment 74 and AdaBoost 4 Experiment 422
+scores15440 <- import('../src/scoresmodel15440.csv', setclass='tibble')
+scores15860 <- import('../src/scoresmodel15860.csv', setclass='tibble')
+scores18549 <- import('../src/scoresmodel18549.csv', setclass='tibble')
+all_scores <- data.frame(scores15440=scores15440$scores, scores15860=scores15860$scores, scores18549=scores18549$scores)
+melted_scores <- melt(all_scores)
+ggplot(melted_scores, aes(value, fill=variable)) + geom_histogram(bins=100, stat='bin')
+```
+
+### All K Fold 13
+
+```{r}
+allkfold4_74 <- import('../src/allkfold13param_config4experiment74.csv', setclass='tibble')
+allkfold4_422 <- import('../src/allkfold13param_config4experiment422.csv', setclass='tibble')
+allkfold23_62 <- import('../src/allkfold13param_config23experiment62.csv', setclass='tibble')
+ggplot(allkfold4_74, aes(k)) + geom_line(aes(y=allkfold4_74$precision), color='#34495eff') + geom_line(aes(y=allkfold4_74$recall), color='#ff9900') + geom_line(aes(y=allkfold23_62$precision)) + geom_line(aes(y=allkfold23_62$recall)) + theme_minimal() + scale_y_continuous('Precision', sec.axis=sec_axis(~ ., name='Recall')) + xlab('Number of Alerts')
+ggplot(allkfold4_422, aes(k)) + geom_line(aes(y=allkfold4_422$precision)) + geom_line(aes(y=allkfold4_422$recall)) + theme_minimal() + scale_y_continuous('Precision', sec.axis=sec_axis(~ ., name='Recall')) + xlab('Number of Alerts')
+
+gathered_data <- allkfold23_62 %>% dplyr::select(precision, recall, k) %>% gather(key=type, value=value, precision:recall) %>%
+  rbind(data.frame(
+    'k'=c(0,6795,6795),
+    'type'=rep('Baseline',3),
+    'value'=c(0.496,0.496,0)
+  ))
+
+image <- ggplot(gathered_data, aes(x=k,y=value, color=type)) + geom_line(aes(linetype=type))+
+  scale_color_manual(name='', values=c('black', '#4285f4', '#ea4335'), labels=c('Baseline','Precision', 'Recall')) + 
+  scale_linetype_manual(name='', values=c('dotted', 'solid', 'solid'), labels=c('Baseline','Precision', 'Recall'))+
+  theme_minimal() + xlab('Number of Referrals') + ylab('') 
+
+ggsave('allkplot.png', plot=image, height=3.75, width=5.5)
+
+
+#+ geom_segment(x=allkfold23_62$x[1], y=0, xend=allkfold23_62$x[1], yend=allkfold23_62$y[1], color='black', linetype='dotted') + geom_segment(x=0, y=allkfold23_62$y[1], xend=allkfold23_62$x[1], yend=allkfold23_62$y[1], color='black', linetype='dotted')
+```
+
+### Quadrant
+
+#### K = 6000
+
+```{r, fig.width=12, fig.height=8}
+quadrant <- import('../src/quadrantexperiments82_62pcs16_23ks6000_4000fold13.csv', setclass='tibble')
+image = ggplot(quadrant, aes(pf_scores, ref_scores, color=as_factor(pf_labels), shape=as_factor(ref_labels))) + geom_point(alpha=1) + geom_line(aes(x), color='black') + geom_line(aes(y=y), color='black') + theme_minimal() + scale_color_manual(name='Found', values=c('#ea4335','#4285f4','#fbbc05'), labels=c('No','Yes','N/A')) + scale_shape_manual(name='Referral', labels=c('No','Yes'), values=c(0,15)) + ylab('Referral Score') + xlab('Person Found Score')
+ggsave('quadrantplot.png', plot=image, height=5, width=6)
+```

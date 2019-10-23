@@ -1,0 +1,32 @@
+﻿with ada as (
+select 
+e.model, e.experiment, e.fold, e.param_config, p.alert, p.label, p.score,
+row_number() over (partition by e.model order by p.score desc) as row_n
+from results.predictions p 
+join results.experiments e on p.model = e.model
+where e.fold = 13 and 
+(e.algorithm ilike '%ada%' and e.param_config = 4 and e.experiment = 74) 
+),
+rf as (select 
+e.model, e.experiment, e.fold, e.param_config, p.alert, p.label, p.score,
+row_number() over (partition by e.model order by p.score desc) as row_n
+from results.predictions p 
+join results.experiments e on p.model = e.model
+where e.fold = 13 and 
+(e.algorithm ilike '%random%' and e.param_config = 23 and e.experiment = 62) 
+)
+
+select 
+a.model as model, 
+a.alert, 
+a.label as true_label,
+a.score as score_ada,
+a.row_n as row_n_ada, 
+r.score as score_rf,
+r.row_n as row_n_rf,
+abs(r.row_n - a.row_n) as diff
+from ada a
+left join rf r on r.alert = a.alert
+order by a.score desc
+
+
