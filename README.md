@@ -111,7 +111,7 @@ We compared our models against the baseline, which is calculated via HomelessLin
 
 Our final best model's were configurations of the Random Forest and AdaBoost algorithms, which performed very similarly and can be generated using the `rf_all` and `ada_all` experiments in the `experiments` directory. Both of these models were trained on all of the data, though we did experiment with separating the London and Non-London data and training separate models.
 
-LINK OR INSERT POSTER HERE RATHER THAN RE-HASHING
+See our culminating poster [here](DataFestPoster.pdf).
 
 ## Next Steps
 
@@ -123,7 +123,7 @@ We were excited to have our work catch the attention of numerous journalists and
 
 * [Reuters: Tech Tool Aims to Stop Bottlenecks in Reaching UK Homeless](https://uk.reuters.com/article/britain-homelessness-technology/tech-tool-aims-to-stop-bottlenecks-in-reaching-uk-homeless-idUKL5N25O4VD)
 * [BBC Radio 4: Interview with Katie Prescott](https://twitter.com/kprescott/status/1169207076079448065?s=21)
-* Sifted (Link to follow)
+* [Sifted: How Machine Learning is Being Used to Tackle Homelessness](https://sifted.eu/articles/tackling-homelessness-machine-learning/?utm_source=twitter.com&utm_medium=social&utm_campaign=hootsuite-ai-homelessness)
 
 ## Authors
 
