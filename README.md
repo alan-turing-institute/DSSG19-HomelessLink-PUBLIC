@@ -133,7 +133,7 @@ This project was carried out as part of the Data Science for Social Good (DSSG) 
 * Lucia (Lushi) Chen
 * Zoe Kimpel
 * Austin Nguyen
-* Harrison Wilde
+* [Harrison Wilde](https://www.linkedin.com/in/harrisonwilde/)
 
 *Project Manager:*
 * Joshua Sidgwick
